@@ -59,7 +59,7 @@ private fun fetchUsersByName(name: String, onResult: (String) -> Unit) {
                 })
                 .decodeAs<List<Users>>()
             onResult(response.joinToString("\n") { user ->
-                "${user.email} (${user.role})${user.username?.let { " - $it" } ?: ""}"
+                "${user.email} (${user.role})${user.name?.let { " - $it" } ?: ""}"
             })
         } catch (e: Exception) {
             onResult("Lỗi: ${e.message}")

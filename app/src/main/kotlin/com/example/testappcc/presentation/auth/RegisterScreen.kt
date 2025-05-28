@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.example.testappcc.core.network.MapboxGeocodingService
@@ -49,13 +50,16 @@ fun RegisterScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var role by remember { mutableStateOf("customer") }
+    var name by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var suggestions by remember { mutableStateOf<List<MapboxPlace>>(emptyList()) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val isValid = phoneNumber.matches(Regex("^0[0-9]{9}\$"))
+    val isValidEmail = email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
+
 
 
     val isLoading = viewModel.isLoading
@@ -92,23 +96,29 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Đăng nhập",
+            text = "Đăng ký",
             style = MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Tên người dùng") },
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Tên người dùng (tùy chọn)") },
-            modifier = Modifier.fillMaxWidth()
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            isError = email.isNotEmpty() && !isValidEmail,
+            supportingText = {
+                if (email.isNotEmpty() && !isValidEmail) {
+                    Text("Email không hợp lệ")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -118,6 +128,16 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
+            label = { Text("Số điện thoại") },
+            isError = !isValid,
+            supportingText = { if (!isValid) Text("Số điện thoại không hợp lệ") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
@@ -180,23 +200,6 @@ fun RegisterScreen(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            listOf("customer", "provider", "admin").forEach { roleOption ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = role == roleOption,
-                        onClick = { role = roleOption }
-                    )
-                    Text(roleOption.replaceFirstChar { it.uppercase() })
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
 
         authError?.let {
             Text(
@@ -222,16 +225,25 @@ fun RegisterScreen(
         TextButton(
             onClick = {
                 if (!isSigningUp) {
-                    isSigningUp = true
-                    viewModel.clearError()
                     if (email.isNotEmpty() && password.isNotEmpty()) {
-                        viewModel.signUp(email, password, address) {
-                            isSigningUp = false
-                            onRegisterSuccess()
+                        isSigningUp = true
+                        viewModel.clearError()
+
+                        coroutineScope.launch {
+                            viewModel.signUp(
+                                email = email,
+                                password = password,
+                                address = address,
+                                name = name,
+                                phoneNumber = phoneNumber,
+                                onSuccess = {
+                                    isSigningUp = false
+                                    onRegisterSuccess()
+                                }
+                            )
                         }
                     } else {
                         viewModel.authError = "Vui lòng nhập email và mật khẩu"
-                        isSigningUp = false
                     }
                 }
             },
@@ -239,6 +251,17 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Đăng ký")
+        }
+
+        if (!authError.isNullOrEmpty()) {
+            Text(
+                text = authError,
+                color = Color.Red,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

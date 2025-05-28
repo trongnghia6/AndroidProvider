@@ -25,6 +25,7 @@ import com.example.testappcc.presentation.search.MapboxSuggestionScreen
 import com.example.testappcc.presentation.BottomNavItem
 import com.example.testappcc.model.viewmodel.TaskCalendarScreen
 import com.example.testappcc.data.model.TaskViewModel
+import com.example.testappcc.presentation.UserProfileScreen
 import com.example.testappcc.presentation.viewmodel.HomeViewModel
 
 @Composable
@@ -86,7 +87,7 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
             }
 
             composable("profile_main") {
-                ProfileScreen()
+                UserProfileScreen(onLogout = onLogout)
             }
 
             composable("calendar_main") {
@@ -100,10 +101,4 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
         }
     }
 }
-
-@Composable
-fun ProfileScreen() {
-    Text(text = "Trang tài khoản đang được phát triển")
-}
-
 

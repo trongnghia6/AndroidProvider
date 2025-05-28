@@ -13,12 +13,16 @@ import com.example.testappcc.core.supabase
 import android.util.Log
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class UsersSignUp(
+    val name: String,
     val email: String,
     val password: String,
+    @SerialName("phone_number")
+    val phoneNumber: String,
     val role: String,
     val address: String
 )
@@ -34,12 +38,16 @@ class AuthViewModel : ViewModel() {
         private set
 
     var authError by mutableStateOf<String?>(null)
+    var isSignUpSuccess by mutableStateOf<Boolean?>(null)
+        private set
+
     suspend fun countUsersByEmail(email: String): Int {
         return try {
             val count = supabase.from("users")
                 .select(columns = Columns.list("email", "password", "role")) {
                     filter {
                         eq("email", email)
+                        eq("role", "provider")
                     }
                 }
                 .decodeList<UsersSignUp>()
@@ -62,6 +70,7 @@ class AuthViewModel : ViewModel() {
                             filter {
                                 eq("email", email)
                                 eq("password", password)
+                                eq("role", "provider")
                             }
                         }
                     .decodeList<UserSignIn>()
@@ -93,6 +102,8 @@ class AuthViewModel : ViewModel() {
         email: String,
         password: String,
         address: String,
+        name: String,
+        phoneNumber: String,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -100,7 +111,7 @@ class AuthViewModel : ViewModel() {
                 val role = "provider"
                 val check = countUsersByEmail(email)
                 if (check == 0){
-                    val newUser = UsersSignUp(email = email, password = password, role = role, address = address )
+                    val newUser = UsersSignUp(email = email, password = password, role = role, address = address, name = name, phoneNumber = phoneNumber  )
                     supabase.from("users").insert(newUser)
                     withContext(Dispatchers.Main) {
                         onSuccess()

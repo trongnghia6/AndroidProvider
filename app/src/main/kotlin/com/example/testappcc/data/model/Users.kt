@@ -1,12 +1,17 @@
 package com.example.testappcc.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Users(
-    val id: String,
+    var id: String,
+    val name: String,
     val email: String,
     val password: String,
     val role: String,
-    val username: String? = null
+    val address: String,
+    @SerialName("phone_number")
+    val phoneNumber: String
+
 )
