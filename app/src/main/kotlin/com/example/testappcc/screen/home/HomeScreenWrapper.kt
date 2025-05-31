@@ -3,6 +3,7 @@ package com.example.testappcc.screen.home
 import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -25,7 +26,9 @@ import com.example.testappcc.presentation.search.MapboxSuggestionScreen
 import com.example.testappcc.presentation.BottomNavItem
 import com.example.testappcc.model.viewmodel.TaskCalendarScreen
 import com.example.testappcc.data.model.TaskViewModel
-import com.example.testappcc.presentation.UserProfileScreen
+import com.example.testappcc.presentation.home.ProviderHomeScreen
+import com.example.testappcc.presentation.registerservices.RegisterServiceScreen
+import com.example.testappcc.presentation.userprofile.UserProfileScreen
 import com.example.testappcc.presentation.viewmodel.HomeViewModel
 
 @Composable
@@ -35,6 +38,7 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
     val bottomNavItems = listOf(
         BottomNavItem("Trang chủ", "home_main", Icons.Default.Home),
         BottomNavItem("Tìm kiếm", "search_main", Icons.Default.Search),
+        BottomNavItem("Thêm", "addservices_main", Icons.Default.Add),
         BottomNavItem("Lịch", "calendar_main", Icons.Default.DateRange),
         BottomNavItem("Tài khoản", "profile_main", Icons.Default.Person),
     )
@@ -75,10 +79,11 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
                 if (isLoading) {
                     Text("Đang tải...")
                 } else {
-                    HomeScreen(
-                        onLogout = onLogout,
-                        viewModel = homeViewModel
-                    )
+//                    HomeScreen(
+//                        onLogout = onLogout,
+//                        viewModel = homeViewModel
+//                    )
+                    ProviderHomeScreen()
                 }
             }
 
@@ -86,8 +91,12 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
                 MapboxSuggestionScreen(RetrofitClient.mapboxGeocodingService)
             }
 
+            composable("addservices_main") {
+                RegisterServiceScreen()
+            }
+
             composable("profile_main") {
-                UserProfileScreen(onLogout = onLogout)
+                UserProfileScreen(geocodingService = RetrofitClient.mapboxGeocodingService,onLogout = onLogout)
             }
 
             composable("calendar_main") {

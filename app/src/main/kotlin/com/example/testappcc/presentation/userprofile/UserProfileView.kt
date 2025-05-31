@@ -1,4 +1,4 @@
-package com.example.testappcc.presentation
+package com.example.testappcc.presentation.userprofile
 
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -36,14 +37,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.testappcc.model.viewmodel.UserViewModel
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import com.example.testappcc.BuildConfig
+import com.example.testappcc.core.network.MapboxPlace
+import kotlinx.coroutines.launch
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.core.content.ContextCompat
+import com.example.testappcc.core.network.MapboxGeocodingService
+import com.example.testappcc.presentation.auth.getCurrentLocationAndUpdateAddress
 
 
 @Composable
 fun UserProfileScreen(
     viewModel: UserViewModel = viewModel(),
+    geocodingService: MapboxGeocodingService,
     onLogout: () -> Unit
 ) {
     val user = viewModel.user
@@ -67,6 +89,18 @@ fun UserProfileScreen(
             viewModel.loadUserById(it)
         }
     }
+
+    if (isLoading) {
+        // Hiển thị loading
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Đang tải thông tin người dùng...")
+        }
+        return
+    }
+
     if (user == null) {
         // Chưa có user, chưa load hoặc chưa có dữ liệu
         Box(
@@ -84,6 +118,32 @@ fun UserProfileScreen(
     var address by remember { mutableStateOf(user.address) }
     var phoneNumber by remember { mutableStateOf(user.phoneNumber) }
 
+    var suggestions by remember { mutableStateOf<List<MapboxPlace>>(emptyList()) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    // Launcher để yêu cầu quyền
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            getCurrentLocationAndUpdateAddress(
+                context = context,
+                geocodingService = geocodingService,
+                accessToken = BuildConfig.MAPBOX_ACCESS_TOKEN,
+                onAddressFound = { address = it },
+                onError = {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(it)
+                    }
+                }
+            )
+        } else {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar("Quyền vị trí bị từ chối")
+            }
+        }
+    }
+
     // Các trạng thái mật khẩu đổi mật khẩu
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
@@ -92,16 +152,7 @@ fun UserProfileScreen(
     var updateError by remember { mutableStateOf<String?>(null) }
 
 
-    if (isLoading) {
-        // Hiển thị loading
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Đang tải thông tin người dùng...")
-        }
-        return
-    }
+
 
     if (errorMessage != null) {
         // Hiển thị lỗi
@@ -182,15 +233,76 @@ fun UserProfileScreen(
 
                         OutlinedTextField(
                             value = address,
-                            onValueChange = { address = it },
+                            onValueChange = {
+                                address = it
+                                coroutineScope.launch {
+                                    if (it.isNotEmpty()) {
+                                        try {
+                                            val result = geocodingService.searchPlaces(
+                                                query = it,
+                                                accessToken = BuildConfig.MAPBOX_ACCESS_TOKEN
+                                            )
+                                            suggestions = result.features
+                                        } catch (e: Exception) {
+                                            snackbarHostState.showSnackbar("Lỗi khi tìm kiếm địa chỉ: ${e.message}")
+                                        }
+                                    } else {
+                                        suggestions = emptyList()
+                                    }
+                                }
+                            },
                             label = { Text("Địa chỉ") },
                             modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = {
+                                    if (ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                                        ) == PackageManager.PERMISSION_GRANTED) {
+                                        getCurrentLocationAndUpdateAddress(
+                                            context = context,
+                                            geocodingService = geocodingService,
+                                            accessToken = BuildConfig.MAPBOX_ACCESS_TOKEN,
+                                            onAddressFound = { address = it },
+                                            onError = {
+                                                coroutineScope.launch { snackbarHostState.showSnackbar(it) }
+                                            }
+                                        )
+                                    } else {
+                                        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                    }
+                                }) {
+                                    Icon(Icons.Default.LocationOn, contentDescription = "Tự định vị")
+                                }
+                            },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                                 cursorColor = MaterialTheme.colorScheme.primary
                             )
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val maxSuggestionsHeight = 150.dp
+
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = maxSuggestionsHeight)
+                        ) {
+                            items(suggestions) { place ->
+                                Text(
+                                    text = place.placeName ?: "Unknown",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            address = place.placeName ?: ""
+                                            suggestions = emptyList()
+                                        }
+                                        .padding(8.dp)
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
 
                         OutlinedTextField(
@@ -344,7 +456,7 @@ fun PasswordChangeDialog(
     onDismiss: () -> Unit,
     onSave: () -> Unit
 ) {
-    androidx.compose.material3.AlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Đổi mật khẩu") },
         text = {
@@ -356,7 +468,7 @@ fun PasswordChangeDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                    visualTransformation = PasswordVisualTransformation()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -367,7 +479,7 @@ fun PasswordChangeDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                    visualTransformation = PasswordVisualTransformation()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -378,7 +490,7 @@ fun PasswordChangeDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                    visualTransformation = PasswordVisualTransformation()
                 )
                 if (error != null) {
                     Spacer(modifier = Modifier.height(8.dp))

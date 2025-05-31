@@ -5,6 +5,7 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+
 @Serializable
 data class ServiceType(
     val id: Int,
@@ -30,6 +31,43 @@ data class Service(
     @SerialName("is_active")
     val isActive: Boolean = true,
 )
+@Serializable
+data class ProviderServices(
+    val id: Int = 0,
+    val name: String = "",
+    @SerialName("service_id")
+    val serviceId: Int = 0,
+    @SerialName("provider_id")
+    val providerId: String = "",
+    @SerialName("custom_price")
+    val price: Int = 0,
+    @SerialName("custom_description")
+    val description: String = "",
+    @SerialName("duration_minutes")
+    val durationMinutes: Int? = null,
+    @SerialName("is_active")
+    val isActive: Boolean = true
+){
+    companion object {
+        val EMPTY = ProviderServices(0, "",0, "", 0, "", 0, true)
+    }
+}
+
+@Serializable
+data class ProviderServicesInsert(
+    val name: String,
+    @SerialName("service_id")
+    val serviceId: Int,
+    @SerialName("provider_id")
+    val providerId: String,
+    @SerialName("custom_price")
+    val price: String,
+    @SerialName("custom_description")
+    val description: String,
+    @SerialName("duration_minutes")
+    val durationMinutes: Int?,
+)
+
 class ServiceTypeRepository {
 
     suspend fun getAllServiceTypes(): List<ServiceType> {

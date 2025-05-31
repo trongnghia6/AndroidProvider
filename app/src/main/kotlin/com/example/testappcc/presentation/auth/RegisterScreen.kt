@@ -1,5 +1,6 @@
-package com.example.testappcc.screen
+package com.example.testappcc.presentation.auth
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Looper
@@ -166,7 +167,7 @@ fun RegisterScreen(
                 IconButton(onClick = {
                     if (ContextCompat.checkSelfPermission(
                             context,
-                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                            Manifest.permission.ACCESS_FINE_LOCATION
                         ) == PackageManager.PERMISSION_GRANTED) {
                         getCurrentLocationAndUpdateAddress(
                             context = context,
@@ -178,7 +179,7 @@ fun RegisterScreen(
                             }
                         )
                     } else {
-                        permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     }
                 }) {
                     Icon(Icons.Default.LocationOn, contentDescription = "Tự định vị")
@@ -274,7 +275,7 @@ fun getCurrentLocationAndUpdateAddress(
 ) {
     if (ContextCompat.checkSelfPermission(
             context,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION
         ) != PackageManager.PERMISSION_GRANTED
     ) {
         onError("Quyền vị trí chưa được cấp.")

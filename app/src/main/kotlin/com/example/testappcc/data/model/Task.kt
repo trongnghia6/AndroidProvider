@@ -1,10 +1,12 @@
 package com.example.testappcc.data.model
 
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.testappcc.core.supabase
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,25 +21,53 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import java.time.LocalDate
+import java.time.ZoneId
 
 @Serializable
 data class Task(
-    val id: String,
-    val typeService: String,
+    val id: Int,
+    val nameService: String,
+    val nameCustomer: String?,
+    val phoneNumber: String?,
     val location: String? = null,
     @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
-    val time: String? = null
+    val startDate: LocalDate,
+    @Serializable(with = LocalDateSerializer::class)
+    val endDate: LocalDate,
+    val endTime: String ? = null,
+    val startTime: String? = null,
+    val status: String,
+    val description: String?
 )
+
 @Serializable
 data class TaskRaw(
     val id: Int,
-    @SerialName("service_type")
-    val typeService: String,
+    @SerialName("name_services")
+    val nameService: String,
+    @SerialName("name_customer")
+    val nameCustomer: String?,
+    @SerialName("phone_number")
+    val phoneNumber: String?,
     val location: String? = null,
-    val time: String? = null
+    @SerialName("end_at")
+    val endTime: String ? = null,
+    @SerialName("start_at")
+    val startTime: String? = null,
+    val status: String,
+    val description: String?
 )
+//@Serializable
+//data class TaskRaw(
+//    val id: Int,
+//    @SerialName("service_type")
+//    val typeService: String,
+//    val location: String? = null,
+//    val time: String? = null
+//)
 @Serializable
 data class Booking(
     val id: Int,
@@ -74,52 +104,63 @@ data class Customer(
 //    val name: String
 //)
 
-class TaskViewModel(private val userId: String) : ViewModel() {
+class TaskViewModel(private val providerId:  String) : ViewModel() {
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     val tasks: StateFlow<List<Task>> = _tasks
 
-    fun fetchTasks() {
+    fun fetchTasks(providerId: String) {
         viewModelScope.launch {
-            val response = supabase
-                .from("bookings")
-                .select(columns = Columns.ALL) {
-                    filter {
-                        eq("provider_id", userId)
+            try {
+                val response = supabase.postgrest
+                    .rpc(
+                        function = "get_bookings_by_provider",
+                        parameters = buildJsonObject {
+                            put("provider_id_input", JsonPrimitive(providerId))
+                        })
+                    .decodeList<TaskRaw>()
+                Log.e("TaskRender", "$response")
+                val tasksList = response.mapNotNull { raw ->
+                    Log.e("TaskRender", "$raw")
+                    val datetimeStartStr = raw.startTime ?: return@mapNotNull null
+                    val datetimeEndStr = raw.endTime ?: return@mapNotNull null
+                    try {
+                        val systemZone = ZoneId.systemDefault()
+
+                        val odst = OffsetDateTime.parse(datetimeStartStr).atZoneSameInstant(systemZone)
+                        val startDate = odst.toLocalDate()
+                        val startTime = odst.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+
+                        val odet = OffsetDateTime.parse(datetimeEndStr).atZoneSameInstant(systemZone)
+                        val endDate = odet.toLocalDate()
+                        val endTime = odet.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+
+                        Task(
+                            id = raw.id,
+                            nameService = raw.nameService,
+                            nameCustomer = raw.nameCustomer,
+                            phoneNumber = raw.phoneNumber,
+                            location = raw.location,
+                            startDate = startDate,
+                            endDate = endDate,
+                            startTime = startTime,
+                            endTime = endTime,
+                            status = raw.status,
+                            description = raw.description
+                        )
+                    } catch (e: Exception) {
+                        Log.e("Calendar", "Error parsing time: $datetimeStartStr", e)
+                        null
                     }
                 }
-                .decodeList<TaskRaw>()
 
-            val tasksList = response.mapNotNull { raw ->
-                val datetimeStr = raw.time ?: return@mapNotNull null
-                try {
-                    val odt = OffsetDateTime.parse(datetimeStr)
-                    val date = odt.toLocalDate()
-                    val time = odt.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
-
-                    val task = Task(
-                        id = raw.id.toString(),
-                        typeService = raw.typeService,
-                        location = raw.location,
-                        date = date,
-                        time = time
-                    )
-                    Log.d("Calendar", "$task")
-                    task
-                } catch (e: Exception) {
-                    Log.e("Calendar", "Error parsing time: $datetimeStr", e)
-                    null
-                }
+                _tasks.value = tasksList
+            } catch (e: Exception) {
+                Log.e("Calendar", "Failed to fetch tasks", e)
             }
-            _tasks.value = tasksList
-            val bookings = supabase
-                .from("bookings")
-                .select(
-                    columns = Columns.list("*, providers(*), customers(*), services(*, service_types(*))")
-                ).decodeList<Booking>()
-
         }
     }
 }
+
 object LocalDateSerializer : KSerializer<LocalDate> {
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
 

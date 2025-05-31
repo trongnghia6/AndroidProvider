@@ -6,14 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.example.testappcc.data.model.Item
+import com.example.testappcc.data.model.Bookings
 import com.example.testappcc.core.supabase
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 
 @Composable
 fun RenderHome(){
-    var items by remember { mutableStateOf<List<Item>>(emptyList()) }
+    var items by remember { mutableStateOf<List<Bookings>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -22,7 +22,7 @@ fun RenderHome(){
         try {
             val fetchedItems = supabase.from("bookings")
                 .select(columns = Columns.list("service_type"))
-                .decodeList<Item>()
+                .decodeList<Bookings>()
             items = fetchedItems
         } catch (e: Exception) {
             error = e.message

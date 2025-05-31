@@ -30,6 +30,7 @@ data class UsersSignUp(
 data class UserSignIn(
     val id : String,
     val email: String,
+    val name: String,
     val password: String
 )
 
@@ -66,7 +67,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val check =  supabase.from("users")
-                        .select(columns = Columns.list("email", "password", "id")) {
+                        .select(columns = Columns.list("email", "password", "id", "name")) {
                             filter {
                                 eq("email", email)
                                 eq("password", password)
@@ -77,14 +78,16 @@ class AuthViewModel : ViewModel() {
                 if (check.isNotEmpty()){
                     val user = check.first() // Lấy người dùng đầu tiên trong danh sách
                     val sharedPref = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+                    val userId = user.id ?: ""
+                    val userName = user.name ?: "Người dùng"
                     with(sharedPref.edit()) {
-                        putString("user_id", user.id)
+                        putString("user_id", userId)
+                        putString("username", userName)
                         apply()
                     }
                     withContext(Dispatchers.Main) {
                         onSuccess()
                     }
-                    Log.e("AuthViewModel", "${user.id}")
                 }else{
                         Log.e("AuthViewModel", "Sign in failed - No user returned")
                     authError = "Không tìm thấy thông tin người dùng"

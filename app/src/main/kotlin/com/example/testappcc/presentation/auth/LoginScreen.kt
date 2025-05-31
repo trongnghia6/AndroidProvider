@@ -1,4 +1,4 @@
-package com.example.testappcc.screen
+package com.example.testappcc.presentation.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
