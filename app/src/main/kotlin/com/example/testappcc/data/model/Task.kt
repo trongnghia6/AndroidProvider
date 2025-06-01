@@ -40,7 +40,8 @@ data class Task(
     val endTime: String ? = null,
     val startTime: String? = null,
     val status: String,
-    val description: String?
+    val description: String?,
+    val customPrice: Double,
 )
 
 @Serializable
@@ -58,7 +59,9 @@ data class TaskRaw(
     @SerialName("start_at")
     val startTime: String? = null,
     val status: String,
-    val description: String?
+    val description: String?,
+    @SerialName("custom_price")
+    val customPrice: Double,
 )
 //@Serializable
 //data class TaskRaw(
@@ -145,7 +148,8 @@ class TaskViewModel(private val providerId:  String) : ViewModel() {
                             startTime = startTime,
                             endTime = endTime,
                             status = raw.status,
-                            description = raw.description
+                            description = raw.description,
+                            customPrice = raw.customPrice,
                         )
                     } catch (e: Exception) {
                         Log.e("Calendar", "Error parsing time: $datetimeStartStr", e)

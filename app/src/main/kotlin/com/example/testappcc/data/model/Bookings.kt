@@ -32,7 +32,9 @@ data class Bookings(
     @SerialName("custom_price")
     val customPrice: Double?,
     @SerialName("name_customer")
-    val customerName: String?
+    val customerName: String?,
+    @SerialName("phone_number")
+    val phoneNumber: String?,
 )
 suspend fun fetchBookingsByProvider(providerId: String): List<Bookings> {
     return try {

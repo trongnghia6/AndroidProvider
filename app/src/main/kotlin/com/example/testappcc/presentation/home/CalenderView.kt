@@ -23,7 +23,6 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.Instant
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -272,6 +271,24 @@ fun TaskListByDate(
             },
             text = {
                 Column {
+                    task.nameCustomer?.let {
+                        Text(
+                            text = "Tên khách hàng: $it",
+                            fontSize = 16.sp
+                        )
+                    }
+                    task.phoneNumber?.let {
+                        Text(
+                            text = "Số điện thoại: $it",
+                            fontSize = 16.sp
+                        )
+                    }
+                    task.location?.let {
+                        Text(
+                            text = "Địa chỉ: $it",
+                            fontSize = 16.sp
+                        )
+                    }
                     Text(
                         text = "Ngày: ${date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
                         fontSize = 16.sp
@@ -420,10 +437,3 @@ fun DatePickerDialog(
         }
     }
 }
-
-data class Task(
-    val nameService: String,
-    val startTime: String?,
-    val endTime: String?,
-    val description: String?
-)
