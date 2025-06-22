@@ -2,12 +2,12 @@ package com.example.testappcc.screen.home
 
 import android.content.Context
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.*
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.HomeRepairService
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -28,6 +28,7 @@ import com.example.testappcc.model.viewmodel.TaskCalendarScreen
 import com.example.testappcc.data.model.TaskViewModel
 import com.example.testappcc.presentation.home.ProviderHomeScreen
 import com.example.testappcc.presentation.registerservices.RegisterServiceScreen
+import com.example.testappcc.presentation.services.ServiceManagementScreen
 import com.example.testappcc.presentation.userprofile.UserProfileScreen
 import com.example.testappcc.presentation.viewmodel.HomeViewModel
 
@@ -37,7 +38,7 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
 
     val bottomNavItems = listOf(
         BottomNavItem("Trang chủ", "home_main", Icons.Default.Home),
-        BottomNavItem("Tìm kiếm", "search_main", Icons.Default.Search),
+        BottomNavItem("Dịch vụ", "service_management", Icons.Default.HomeRepairService),
         BottomNavItem("Thêm", "addservices_main", Icons.Default.Add),
         BottomNavItem("Lịch", "calendar_main", Icons.Default.DateRange),
         BottomNavItem("Tài khoản", "profile_main", Icons.Default.Person),
@@ -106,6 +107,12 @@ fun HomeScreenWrapper(onLogout: () -> Unit) {
 
                 val taskViewModel = remember { TaskViewModel(userId) }
                 TaskCalendarScreen(viewModel = taskViewModel)
+            }
+            // Trong NavHost hoặc Navigation setup
+            composable("service_management") {
+                ServiceManagementScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
     }

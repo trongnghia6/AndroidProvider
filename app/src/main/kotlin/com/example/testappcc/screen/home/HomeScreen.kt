@@ -122,13 +122,6 @@ fun HomeScreen(
                     items(viewModel.services) { service ->
                         ListItem(
                             headlineContent = { Text(service.name) },
-                            supportingContent = {
-                                Column {
-                                    Text(service.description ?: "")
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(service.durationMinutes?.let { "$it phút" } ?: "Chưa rõ") // giả sử service có thuộc tính duration kiểu String
-                                }
-                            },
                             leadingContent = {
                                 AsyncImage(
                                     model = service.imageUrl,  // url icon của service

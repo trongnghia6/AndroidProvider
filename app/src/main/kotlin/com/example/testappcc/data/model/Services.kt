@@ -24,8 +24,8 @@ data class Service(
     val serviceTypeId: Int,
     val name: String,
     val description: String? = null,
-    @SerialName("duration_minutes")
-    val durationMinutes: Int? = null,
+    @SerialName("number_staff")
+    val numberStaff: Int? = null,
     @SerialName("image_url")
     val imageUrl: String? = null,
     @SerialName("is_active")
@@ -43,8 +43,8 @@ data class ProviderServices(
     val price: Int = 0,
     @SerialName("custom_description")
     val description: String = "",
-    @SerialName("duration_minutes")
-    val durationMinutes: Int? = null,
+    @SerialName("number_staff")
+    val numberStaff: Int? = null,
     @SerialName("is_active")
     val isActive: Boolean = true
 ){
@@ -64,9 +64,10 @@ data class ProviderServicesInsert(
     val price: String,
     @SerialName("custom_description")
     val description: String,
-    @SerialName("duration_minutes")
-    val durationMinutes: Int?,
+    @SerialName("number_staff")
+    val numberStaff: Int?,
 )
+
 
 class ServiceTypeRepository {
 

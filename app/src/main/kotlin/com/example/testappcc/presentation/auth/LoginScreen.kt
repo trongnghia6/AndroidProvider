@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -186,7 +188,7 @@ private fun LoginFormCard(
                 trailingIcon = {
                     IconButton(onClick = onPasswordVisibilityChange) {
                         Icon(
-                            imageVector = if (passwordVisible) Icons.Default.Info else Icons.Default.Close,
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = if (passwordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -232,7 +234,7 @@ private fun LoginFormCard(
                     }
                 } else {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Icons.AutoMirrored.Filled.Login,
                         contentDescription = "Login",
                         modifier = Modifier.size(20.dp)
                     )

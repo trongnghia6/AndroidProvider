@@ -23,11 +23,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.testappcc.BuildConfig
 import com.example.testappcc.data.model.Bookings
 import com.example.testappcc.model.viewmodel.ProviderHomeViewModel
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlinx.datetime.Instant as KxInstant
+
 
 @Composable
 fun ProviderHomeScreen(
@@ -221,11 +225,6 @@ fun TaskDetailDialog(
                     DetailRow(
                         label = "Giờ kết thúc",
                         value = endTime,
-                        icon = Icons.Default.Star
-                    )
-                    DetailRow(
-                        label = "Thời lượng",
-                        value = "${task.durationMinutes} phút",
                         icon = Icons.Default.Star
                     )
                 }
@@ -723,6 +722,24 @@ fun PendingTaskCard(
     onReject: (Int) -> Unit,
     onTaskClick: (Bookings) -> Unit
 ) {
+    val formatterDate = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val formatterTime = DateTimeFormatter.ofPattern("HH:mm")
+
+    val startInstantKx: KxInstant = task.startAt // kotlinx.datetime.Instant
+    val endInstantKx: KxInstant = task.endAt
+
+    val userZone = ZoneId.systemDefault()
+
+// ✅ Chuyển từng KxInstant sang java.time.Instant
+    val startInUserZone = Instant.parse(startInstantKx.toString()).atZone(userZone)
+    val endInUserZone = Instant.parse(endInstantKx.toString()).atZone(userZone)
+
+    val date = startInUserZone.format(formatterDate)
+    val startTime = startInUserZone.format(formatterTime)
+    val endTime = endInUserZone.format(formatterTime)
+
+    val text = "$date, $startTime - $endTime - ${task.nameServices}"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -746,7 +763,7 @@ fun PendingTaskCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${task.startAt} - ${task.nameServices}",
+                    text = text,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )

@@ -27,8 +27,8 @@ data class Bookings(
     val providerId: String,
     @SerialName("name_services")
     val nameServices: String,
-    @SerialName("duration_minutes")
-    val durationMinutes: Int?,
+    @SerialName("number_staff")
+    val numberStaff: Int?,
     @SerialName("custom_price")
     val customPrice: Double?,
     @SerialName("name_customer")

@@ -127,5 +127,6 @@ dependencies {
     implementation(libs.calendarcompose)
     implementation(libs.coil.compose)
     implementation(libs.compose.foundation)
+    implementation(libs.material.icons.extended)
 
 }

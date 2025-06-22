@@ -36,7 +36,7 @@ fun RegisterServiceScreen(viewModel: RegisterServiceViewModel = viewModel()) {
     var nameServices by remember { mutableStateOf("") }
     var customPrice by remember { mutableStateOf("") }
     var customDescription by remember { mutableStateOf("") }
-    var customDuration by remember { mutableStateOf("") }
+    var numberStaff by remember { mutableStateOf("") }
     var showSuccess by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -91,9 +91,9 @@ fun RegisterServiceScreen(viewModel: RegisterServiceViewModel = viewModel()) {
                 onPriceChange = { input ->
                     if (input.all { it.isDigit() }) customPrice = input
                 },
-                customDuration = customDuration,
-                onDurationChange = { input ->
-                    if (input.all { it.isDigit() }) customDuration = input
+                numberStaff = numberStaff,
+                onNumberStaffChange = { input ->
+                    if (input.all { it.isDigit() }) numberStaff = input
                 },
                 customDescription = customDescription,
                 onDescriptionChange = { customDescription = it }
@@ -111,7 +111,7 @@ fun RegisterServiceScreen(viewModel: RegisterServiceViewModel = viewModel()) {
                         providerId = userId,
                         price = customPrice.toString(),
                         description = customDescription,
-                        durationMinutes = customDuration.toInt(),
+                        numberStaff = numberStaff.toInt(),
                     )
 
                     if (selectedService != null && userName.isNotBlank()) {
@@ -232,8 +232,8 @@ private fun ServiceDetailsSection(
     onNameChange: (String) -> Unit,
     customPrice: String,
     onPriceChange: (String) -> Unit,
-    customDuration: String,
-    onDurationChange: (String) -> Unit,
+    numberStaff: String,
+    onNumberStaffChange: (String) -> Unit,
     customDescription: String,
     onDescriptionChange: (String) -> Unit
 ) {
@@ -268,9 +268,9 @@ private fun ServiceDetailsSection(
                 )
 
                 CustomTextField(
-                    value = customDuration,
-                    onValueChange = onDurationChange,
-                    label = "Thời gian",
+                    value = numberStaff,
+                    onValueChange = onNumberStaffChange,
+                    label = "Số nhân viên",
                     icon = Icons.Default.Star,
                     placeholder = "30",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
