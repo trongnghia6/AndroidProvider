@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.testappcc"
+    namespace = "com.example.providerapp"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.testappcc"
+        applicationId = "com.example.providerapp"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -106,6 +106,8 @@ dependencies {
     implementation(libs.ktor.serialization.json)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.client.auth)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.websockets)
 
     // Logging
     implementation(libs.slf4j.simple)
