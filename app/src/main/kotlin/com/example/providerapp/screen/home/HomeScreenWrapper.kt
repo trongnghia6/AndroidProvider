@@ -3,6 +3,7 @@ package com.example.providerapp.screen.home
 import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.HomeRepairService
@@ -31,7 +32,6 @@ import com.example.providerapp.presentation.userprofile.UserProfileView
 import com.example.providerapp.presentation.viewmodel.HomeViewModel
 import com.example.providerapp.presentation.chat.ChatListScreen
 import com.example.providerapp.presentation.chat.ChatScreen
-import androidx.compose.material.icons.filled.Message
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -47,7 +47,7 @@ fun HomeScreenWrapper(
     val bottomNavItems = listOf(
         BottomNavItem("Trang chủ", "home_main", Icons.Default.Home),
         BottomNavItem("Dịch vụ", "service_management", Icons.Default.HomeRepairService),
-        BottomNavItem("Tin nhắn", "chat_main", Icons.Default.Message),
+        BottomNavItem("Tin nhắn", "chat_main", Icons.AutoMirrored.Filled.Message),
         BottomNavItem("Lịch", "calendar_main", Icons.Default.DateRange),
         BottomNavItem("Hồ sơ", "profile_main", Icons.Default.Person),
     )
@@ -150,13 +150,10 @@ fun HomeScreenWrapper(
 
             composable("avatar_change") {
                 AvatarChangeScreen(
-                    onBackClick = { internalNavController.popBackStack() },
-                    onAvatarSelected = { avatarUrl ->
-                        // TODO: Save avatar to user profile
-                        internalNavController.popBackStack()
-                    }
+                    onBackClick = { internalNavController.popBackStack() }
                 )
             }
+
         }
     }
 }

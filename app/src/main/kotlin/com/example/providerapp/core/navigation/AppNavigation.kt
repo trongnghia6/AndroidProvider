@@ -14,7 +14,6 @@ import com.example.providerapp.presentation.search.MapboxSuggestionScreen
 import com.example.providerapp.presentation.auth.RegisterScreen
 import com.example.providerapp.screen.home.HomeScreenWrapper
 import com.example.providerapp.presentation.search.SearchUsersScreen
-import com.example.providerapp.presentation.userprofile.AvatarChangeScreen
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -97,14 +96,6 @@ fun AppNavigation() {
                     // Create new chat or navigate to existing chat
                     // For now, navigate to a new chat
                     navController.navigate("chat/new_${user.id}/${user.id}/${user.name}")
-                }
-            )
-        }
-        composable("avatar_change") {
-            AvatarChangeScreen(
-                onBackClick = { navController.popBackStack() },
-                onAvatarSelected = { avatarUrl ->
-                    // TODO: Save avatar to user profile
                 }
             )
         }

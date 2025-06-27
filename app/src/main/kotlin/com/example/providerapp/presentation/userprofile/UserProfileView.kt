@@ -44,10 +44,13 @@ import com.example.providerapp.model.viewmodel.UserViewModel
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,7 +60,10 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.core.content.ContextCompat
+import coil.compose.AsyncImage
 import com.example.providerapp.core.network.MapboxGeocodingService
 import com.example.providerapp.presentation.auth.getCurrentLocationAndUpdateAddress
 
@@ -66,7 +72,8 @@ import com.example.providerapp.presentation.auth.getCurrentLocationAndUpdateAddr
 fun UserProfileScreen(
     viewModel: UserViewModel = viewModel(),
     geocodingService: MapboxGeocodingService,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onAvatarClick: () -> Unit = {}
 ) {
     val user = viewModel.user
     val isEditing = viewModel.isEditing
@@ -192,7 +199,29 @@ fun UserProfileScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+
+                    // Avatar
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                            .clickable { onAvatarClick() }, // sử dụng callback khi nhấn avatar
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = user.avatar ?: "", // đường dẫn avatar
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+
                     // Email - luôn đọc
                     Text(
                         text = "Email",
@@ -292,11 +321,11 @@ fun UserProfileScreen(
                         ) {
                             items(suggestions) { place ->
                                 Text(
-                                    text = place.placeName ?: "Unknown",
+                                    text = place.placeName,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            address = place.placeName ?: ""
+                                            address = place.placeName
                                             suggestions = emptyList()
                                         }
                                         .padding(8.dp)
@@ -375,6 +404,7 @@ fun UserProfileScreen(
                         ) {
                             Text("Chỉnh sửa")
                         }
+
 
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -533,6 +563,7 @@ fun UserProfileView(
 ) {
     UserProfileScreen(
         geocodingService = com.example.providerapp.core.network.RetrofitClient.mapboxGeocodingService,
-        onLogout = {} // Default empty logout for now
+        onLogout = {}, // Default empty logout for now
+        onAvatarClick = onAvatarClick ?: {}
     )
 }

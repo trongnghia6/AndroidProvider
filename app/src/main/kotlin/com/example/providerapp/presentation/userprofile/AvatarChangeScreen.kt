@@ -1,5 +1,16 @@
 package com.example.providerapp.presentation.userprofile
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,7 +19,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Photo
@@ -16,20 +27,94 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.providerapp.presentation.viewmodel.AvatarViewModel
+
+// Function to create a temporary file for camera
+private fun createImageFile(context: Context): File {
+    val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val storageDir: File = File(context.getExternalFilesDir(null), "Pictures")
+    if (!storageDir.exists()) {
+        storageDir.mkdirs()
+    }
+    return File(storageDir, "JPEG_${timeStamp}_.jpg")
+}
+
+// Function to get URI from file using FileProvider
+private fun getUriForFile(context: Context, file: File): Uri {
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvatarChangeScreen(
-    currentAvatarUrl: String? = null,
     onBackClick: () -> Unit,
-    onAvatarSelected: (String?) -> Unit
+    avatarViewModel: AvatarViewModel = viewModel()
 ) {
-    var selectedAvatar by remember { mutableStateOf(currentAvatarUrl) }
-    var isUploading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var selectedAvatarType by remember { mutableStateOf<AvatarType>(AvatarType.Current) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Image picker launchers
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { avatarViewModel.uploadAvatar(context, it) }
+    }
+    
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            avatarViewModel.uploadAvatar(context, tempCameraUri!!)
+        }
+    }
+    
+    // Permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            try {
+                val imageFile = createImageFile(context)
+                val uri = getUriForFile(context, imageFile)
+                tempCameraUri = uri
+                cameraLauncher.launch(uri)
+            } catch (e: Exception) {
+                galleryLauncher.launch("image/*")
+            }
+        } else {
+            // Permission denied, fallback to gallery
+            galleryLauncher.launch("image/*")
+        }
+    }
+    
+    // Load user data when screen first opens
+    LaunchedEffect(Unit) {
+        avatarViewModel.loadCurrentUser(context)
+    }
+    
+    // Show error messages
+    avatarViewModel.error?.let { error ->
+        LaunchedEffect(error) {
+            // You can show a snackbar here
+            // For now just clear the error after showing
+            avatarViewModel.clearError()
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -40,18 +125,29 @@ fun AvatarChangeScreen(
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Quay lại"
                     )
                 }
             },
             actions = {
                 TextButton(
-                    onClick = { 
-                        onAvatarSelected(selectedAvatar)
+                    onClick = {
+                        when (selectedAvatarType) {
+                            is AvatarType.Predefined -> {
+                                // For now, predefined avatars are just emojis, 
+                                // you can implement actual predefined avatar URLs later
+                            }
+                            AvatarType.Remove -> {
+                                avatarViewModel.removeAvatar(context)
+                            }
+                            else -> {
+                                // Current avatar, no change needed
+                            }
+                        }
                         onBackClick()
                     },
-                    enabled = !isUploading
+                    enabled = !avatarViewModel.isUploading
                 ) {
                     Text("Lưu")
                 }
@@ -70,28 +166,87 @@ fun AvatarChangeScreen(
                     .padding(vertical = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Surface(
+                Box(
                     modifier = Modifier.size(120.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        if (selectedAvatar != null) {
-                            // TODO: Load image with Coil
-                            // AsyncImage(model = selectedAvatar, ...)
-                            Text(
-                                text = "IMG",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 24.sp
-                            )
-                        } else {
-                            Text(
-                                text = "?",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 32.sp
-                            )
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        when {
+                            avatarViewModel.isUploading -> {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    CircularProgressIndicator(
+                                        progress = avatarViewModel.uploadProgress,
+                                        modifier = Modifier.size(100.dp),
+                                        strokeWidth = 4.dp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "${(avatarViewModel.uploadProgress * 100).toInt()}%",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            
+                            selectedAvatarType == AvatarType.Remove -> {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "?",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 32.sp
+                                    )
+                                }
+                            }
+
+                            selectedAvatarType is AvatarType.Predefined -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            (selectedAvatarType as AvatarType.Predefined).avatar.backgroundColor,
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = (selectedAvatarType as AvatarType.Predefined).avatar.emoji,
+                                        fontSize = 48.sp
+                                    )
+                                }
+                            }
+
+                            avatarViewModel.currentUser?.avatar != null -> {
+                                AsyncImage(
+                                    model = avatarViewModel.currentUser?.avatar,
+                                    contentDescription = "Current Avatar",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                    error = painterResource(android.R.drawable.ic_menu_gallery),
+                                    placeholder = painterResource(android.R.drawable.ic_menu_gallery)
+                                )
+                            }
+                            
+                            else -> {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "?",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 32.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -116,7 +271,24 @@ fun AvatarChangeScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { 
-                            // TODO: Implement camera capture
+                            // Check camera permission
+                            when (PackageManager.PERMISSION_GRANTED) {
+                                ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
+                                    // Permission granted, launch camera
+                                    try {
+                                        val imageFile = createImageFile(context)
+                                        val uri = getUriForFile(context, imageFile)
+                                        tempCameraUri = uri
+                                        cameraLauncher.launch(uri)
+                                    } catch (e: Exception) {
+                                        galleryLauncher.launch("image/*")
+                                    }
+                                }
+                                else -> {
+                                    // Request permission
+                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                }
+                            }
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
@@ -146,7 +318,7 @@ fun AvatarChangeScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { 
-                            // TODO: Implement gallery picker
+                            galleryLauncher.launch("image/*")
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
@@ -188,8 +360,9 @@ fun AvatarChangeScreen(
                 items(getDefaultAvatars()) { avatar ->
                     PredefinedAvatarItem(
                         avatar = avatar,
-                        isSelected = selectedAvatar == avatar.url,
-                        onClick = { selectedAvatar = avatar.url }
+                        isSelected = selectedAvatarType is AvatarType.Predefined && 
+                                   (selectedAvatarType as AvatarType.Predefined).avatar.id == avatar.id,
+                        onClick = { selectedAvatarType = AvatarType.Predefined(avatar) }
                     )
                 }
             }
@@ -198,7 +371,7 @@ fun AvatarChangeScreen(
 
             // Remove Avatar Option
             OutlinedButton(
-                onClick = { selectedAvatar = null },
+                onClick = { selectedAvatarType = AvatarType.Remove },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
@@ -256,6 +429,13 @@ fun PredefinedAvatarItem(
             }
         }
     }
+}
+
+sealed class AvatarType {
+    object Current : AvatarType()
+    object Remove : AvatarType()
+    data class Predefined(val avatar: DefaultAvatar) : AvatarType()
+    data class Upload(val uri: Uri) : AvatarType()
 }
 
 data class DefaultAvatar(
