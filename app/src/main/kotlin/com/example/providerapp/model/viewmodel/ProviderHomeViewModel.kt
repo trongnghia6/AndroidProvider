@@ -37,7 +37,7 @@ class ProviderHomeViewModel : ViewModel() {
                 errorMessage = null
                 val allBookings = fetchBookingsByProvider(providerId)
                 // Lọc những task có trạng thái "pending"
-                val filterBookings = allBookings.filter { it.status == "confirmed" }
+                val filterBookings = allBookings.filter { it.status == "accepted" || it.status == "c-confirmed" }
                 bookings = filterBookings // Hoặc lọc theo ngày nếu cần
             } catch (e: Exception) {
                 errorMessage = e.message
@@ -64,7 +64,7 @@ class ProviderHomeViewModel : ViewModel() {
             try {
                 supabase.postgrest.from("bookings").update(
                     {
-                        set("status","confirmed")
+                        set("status","accepted")
                     }){
                         filter {
                             eq("id", taskId)
@@ -98,6 +98,34 @@ class ProviderHomeViewModel : ViewModel() {
             } catch (e: Exception) {
                 errorMessage = e.message
                 Log.d("UpdateTask", "$e")
+            }
+        }
+    }
+    fun completeBooking(bookingId: Int, currentStatus: String, providerId: String) {
+        viewModelScope.launch {
+            try {
+                val newStatus = when (currentStatus) {
+                    "accepted" -> "p-confirmed"
+                    "c-confirmed" -> "completed"
+                    else -> currentStatus // Không thay đổi nếu không phải 2 trạng thái trên
+                }
+
+                supabase.postgrest.from("bookings").update(
+                    {
+                        set("status", newStatus)
+                    }
+                ) {
+                    filter {
+                        eq("id", bookingId)
+                    }
+                }
+
+                // Refresh bookings
+                loadBookings(providerId)
+                Log.d("CompleteBooking", "Updated booking $bookingId from $currentStatus to $newStatus")
+            } catch (e: Exception) {
+                errorMessage = e.message
+                Log.e("CompleteBooking", "Error updating booking status", e)
             }
         }
     }

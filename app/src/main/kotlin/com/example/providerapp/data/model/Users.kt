@@ -7,12 +7,12 @@ import kotlinx.serialization.Serializable
 data class Users(
     var id: String,
     val name: String,
-    val email: String,
-    val password: String,
-    val role: String,
-    val address: String,
+    val email: String = "",
+    val password: String = "",
+    val role: String = "provider",
+    val address: String = "",
     @SerialName("phone_number")
-    val phoneNumber: String,
+    val phoneNumber: String = "",
     val avatar: String ?= null,
 
 )

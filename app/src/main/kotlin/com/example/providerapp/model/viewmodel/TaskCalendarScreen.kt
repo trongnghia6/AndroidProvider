@@ -25,7 +25,7 @@ fun TaskCalendarScreen(viewModel: TaskViewModel) {
     // Nhóm công việc theo ngày
     val tasksByDate = remember(taskList) {
         taskList
-            .filter { it.status == "confirmed" }  // Lọc theo trạng thái confirmed
+            .filter { it.status == "accepted" }  // Lọc theo trạng thái confirmed
             .groupBy { it.startDate }
     }
 

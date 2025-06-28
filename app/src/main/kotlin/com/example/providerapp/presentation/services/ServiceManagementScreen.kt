@@ -1,6 +1,5 @@
 package com.example.providerapp.presentation.services
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -39,7 +38,8 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServiceManagementScreen(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onServiceClick: (ServiceWithDetails) -> Unit // Thêm callback này
 ) {
     val context = LocalContext.current
     val providerId = remember {
@@ -209,7 +209,8 @@ fun ServiceManagementScreen(
                             onChangeStatusClick = {
                                 selectedService = service
                                 showChangeStatusDialog = true
-                            }
+                            },
+                            onServiceClick = { onServiceClick(service) } // Truyền callback
                         )
                     }
                 }
@@ -231,9 +232,11 @@ fun ServiceManagementScreen(
                             showAddDialog = false
                             // Reload services
                             if (providerId != null) {
-                                loadServices(providerId) { result, errorMsg ->
-                                    services = result
-                                    error = errorMsg
+                                coroutineScope.launch {
+                                    loadServices(providerId) { result, errorMsg ->
+                                        services = result
+                                        error = errorMsg
+                                    }
                                 }
                             }
                         }
@@ -272,9 +275,11 @@ fun ServiceManagementScreen(
                             selectedService = null
                             // Reload services
                             if (providerId != null) {
-                                loadServices(providerId) { result, errorMsg ->
-                                    services = result
-                                    error = errorMsg
+                                coroutineScope.launch {
+                                    loadServices(providerId) { result, errorMsg ->
+                                        services = result
+                                        error = errorMsg
+                                    }
                                 }
                             }
                         }
@@ -322,9 +327,11 @@ fun ServiceManagementScreen(
                                     showChangeStatusDialog = false
                                     selectedService = null
                                     if (providerId != null) {
-                                        loadServices(providerId) { result, errorMsg ->
-                                            services = result
-                                            error = errorMsg
+                                        coroutineScope.launch {
+                                            loadServices(providerId) { result, errorMsg ->
+                                                services = result
+                                                error = errorMsg
+                                            }
                                         }
                                     }
                                 }
@@ -366,13 +373,14 @@ fun ServiceManagementScreen(
 fun ServiceCard(
     service: ServiceWithDetails,
     onEditClick: () -> Unit,
-    onChangeStatusClick: () -> Unit
+    onChangeStatusClick: () -> Unit,
+    onServiceClick: () -> Unit // Thêm callback này
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(4.dp, RoundedCornerShape(12.dp))
-            .clickable { onEditClick() },
+            .clickable { onServiceClick() }, // Sửa lại để gọi onServiceClick
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {

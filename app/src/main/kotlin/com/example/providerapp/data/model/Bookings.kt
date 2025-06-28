@@ -34,6 +34,50 @@ data class Bookings(
     @SerialName("phone_number")
     val phoneNumber: String?,
 )
+
+@Serializable
+data class ListBooking(
+    val id: Int,
+    @SerialName("customer_id")
+    val customerId: String,
+    val description: String? = null,
+    val status: String,
+    val location: String? = null,
+    @SerialName("start_at")
+    val startAt: String? = null,
+    @SerialName("end_at")
+    val endAt: String? = null,
+    @SerialName("provider_service_id")
+    val providerServiceId: Int? = null,
+    @SerialName("number_workers")
+    val numberWorkers: Int? = null,
+
+    // nested list of transactions
+    val transactions: List<Transaction> = emptyList(),
+
+    // nested provider service
+    @SerialName("provider_services")
+    val providerService: ProviderService? = null,
+    val users: Users ? = null, // nested user data
+)
+
+@Serializable
+data class Transaction(
+    val id: String,
+    val amount: Double,
+    val status: String,
+    @SerialName("created_at")
+    val createdAt: String
+)
+
+@Serializable
+data class ProviderService(
+    val id: Int,
+    val name: String,
+    @SerialName("provider_id")
+    val providerId: String
+)
+
 suspend fun fetchBookingsByProvider(providerId: String): List<Bookings> {
     return try {
         val result = supabase.postgrest.rpc(

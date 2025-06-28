@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +37,10 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.providerapp.presentation.userprofile.AvatarChangeScreen
+import com.example.providerapp.presentation.services.ServiceDetailsScreen
+import com.example.providerapp.data.model.ServiceWithDetails
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Composable
 fun HomeScreenWrapper(
@@ -123,8 +128,45 @@ fun HomeScreenWrapper(
             // Trong NavHost hoặc Navigation setup
             composable("service_management") {
                 ServiceManagementScreen(
-                    onBackClick = { internalNavController.popBackStack() }
+                    onBackClick = { internalNavController.popBackStack() },
+                    onServiceClick = { service ->
+                        try {
+                            val serviceJson = Json.encodeToString(service)
+                            internalNavController.navigate("service_details/$serviceJson")
+                        } catch (e: Exception) {
+                            // Handle encoding error
+                        }
+                    }
                 )
+            }
+
+            composable(
+                "service_details/{serviceData}",
+                arguments = listOf(navArgument("serviceData") { type = NavType.StringType })
+            ) { backStackEntry ->
+
+                val serviceDataJson = backStackEntry.arguments?.getString("serviceData")
+
+                // Decode trước khi render composable
+                val service = remember(serviceDataJson) {
+                    try {
+                        serviceDataJson?.let { Json.decodeFromString<ServiceWithDetails>(it) }
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (service != null) {
+                    ServiceDetailsScreen(
+                        service = service,
+                        onBackClick = { internalNavController.popBackStack() }
+                    )
+                } else {
+                    // Nếu lỗi, có thể điều hướng hoặc hiển thị trạng thái lỗi
+                    LaunchedEffect(Unit) {
+                        internalNavController.popBackStack()
+                    }
+                }
             }
 
             // Chat routes
@@ -157,4 +199,3 @@ fun HomeScreenWrapper(
         }
     }
 }
-

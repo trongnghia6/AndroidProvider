@@ -68,6 +68,43 @@ data class ProviderServicesInsert(
     val numberStaff: Int?,
 )
 
+@Serializable
+data class ServiceRating(
+    val id: Int,
+    @SerialName("provider_service_id")
+    val providerServiceId: Int,
+    @SerialName("user_id")
+    val userId: String,
+    val rating: Int,
+    val comment: String? = null,
+    val responses: String? = null,
+    @SerialName("created_at")
+    val createdAt: String,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
+)
+
+@Serializable
+data class ServiceRatingWithUser(
+    val id: Int,
+    @SerialName("provider_service_id")
+    val providerServiceId: Int,
+    @SerialName("user_id")
+    val userId: String,
+    val rating: Int,
+    val comment: String? = null,
+    val responses: String? = null,
+    @SerialName("created_at")
+    val createdAt: String,
+    @SerialName("updated_at")
+    val updatedAt: String? = null,
+    val users: Users
+)
+
+@Serializable
+data class ServiceRatingUpdate(
+    val responses: String
+)
 
 class ServiceTypeRepository {
 

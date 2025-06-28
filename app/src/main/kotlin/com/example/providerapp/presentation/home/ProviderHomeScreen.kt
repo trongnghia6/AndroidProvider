@@ -97,7 +97,10 @@ fun ProviderHomeScreen(
             TodayBookingsSection(
                 bookings = todayBookings,
                 errorMessage = errorMessage,
-                onTaskClick = { selectedTask = it }
+                onTaskClick = { selectedTask = it },
+                onCompleteBooking = { bookingId, currentStatus ->
+                    viewModel.completeBooking(bookingId, currentStatus, providerId)
+                }
             )
         }
 
@@ -310,7 +313,7 @@ fun TaskDetailDialog(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Confirmed",
+                                contentDescription = "Accepted",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -460,7 +463,8 @@ private fun HeaderSection(userName: String) {
 private fun TodayBookingsSection(
     bookings: List<Bookings>,
     errorMessage: String?,
-    onTaskClick: (Bookings) -> Unit
+    onTaskClick: (Bookings) -> Unit,
+    onCompleteBooking: (Int, String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -507,7 +511,7 @@ private fun TodayBookingsSection(
                     EmptyBookingsMessage()
                 }
                 else -> {
-                    BookingList(bookings, onTaskClick)
+                    BookingList(bookings, onTaskClick, onCompleteBooking)
                 }
             }
         }
@@ -580,14 +584,19 @@ private fun PendingTasksSection(
 }
 
 @Composable
-fun BookingList(bookings: List<Bookings>, onTaskClick: (Bookings) -> Unit) {
+fun BookingList(
+    bookings: List<Bookings>, 
+    onTaskClick: (Bookings) -> Unit,
+    onCompleteBooking: (Int, String) -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         bookings.forEach { booking ->
             AppointmentCard(
                 appointment = booking,
-                onTaskClick = onTaskClick
+                onTaskClick = onTaskClick,
+                onCompleteBooking = onCompleteBooking
             )
         }
     }
@@ -597,7 +606,8 @@ fun BookingList(bookings: List<Bookings>, onTaskClick: (Bookings) -> Unit) {
 fun AppointmentCard(
     appointment: Bookings,
     modifier: Modifier = Modifier,
-    onTaskClick: (Bookings) -> Unit
+    onTaskClick: (Bookings) -> Unit,
+    onCompleteBooking: (Int, String) -> Unit
 ) {
     val systemZone = ZoneId.systemDefault()
     val startTime = OffsetDateTime.parse(appointment.startAt.toString())
@@ -611,76 +621,131 @@ fun AppointmentCard(
         .format(DateTimeFormatter.ofPattern("HH:mm"))
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onTaskClick(appointment) },
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(16.dp)
         ) {
-            // Time indicator
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            // Main content row - clickable
+            Row(
                 modifier = Modifier
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        RoundedCornerShape(8.dp)
-                    )
-                    .padding(12.dp)
+                    .fillMaxWidth()
+                    .clickable { onTaskClick(appointment) },
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = startTime,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = endTime,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Service and customer info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = appointment.nameServices,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
+                // Time indicator
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Customer",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = appointment.customerName.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = startTime,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = endTime,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                     )
                 }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Service and customer info
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = appointment.nameServices,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Customer",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = appointment.customerName.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Status indicator
+                Icon(
+                    imageVector = when (appointment.status) {
+                        "accepted" -> Icons.Default.CheckCircle
+                        "c-confirmed" -> Icons.Default.Verified
+                        "completed" -> Icons.Default.TaskAlt
+                        else -> Icons.Default.CheckCircle
+                    },
+                    contentDescription = "Status",
+                    tint = when (appointment.status) {
+                        "accepted" -> MaterialTheme.colorScheme.primary
+                        "c-confirmed" -> MaterialTheme.colorScheme.secondary
+                        "completed" -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.primary
+                    },
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
-            // Status indicator
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = "Confirmed",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
+            // Complete button - only show for accepted and c-confirmed bookings
+            if (appointment.status == "accepted" || appointment.status == "c-confirmed") {
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = { 
+                            onCompleteBooking(appointment.id, appointment.status)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (appointment.status == "accepted") 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.secondary
+                        ),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (appointment.status == "accepted") 
+                                Icons.Default.CheckCircle 
+                            else 
+                                Icons.Default.TaskAlt,
+                            contentDescription = "Complete",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (appointment.status == "accepted") 
+                                "Xác nhận" 
+                            else 
+                                "Hoàn thành",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -713,7 +778,6 @@ fun ReminderCard(message: String) {
         }
     }
 }
-
 @Composable
 fun PendingTaskCard(
     task: Bookings,
@@ -728,7 +792,6 @@ fun PendingTaskCard(
     val endInstantKx: KxInstant = task.endAt
 
     val userZone = ZoneId.systemDefault()
-
 // ✅ Chuyển từng KxInstant sang java.time.Instant
     val startInUserZone = Instant.parse(startInstantKx.toString()).atZone(userZone)
     val endInUserZone = Instant.parse(endInstantKx.toString()).atZone(userZone)
@@ -767,7 +830,6 @@ fun PendingTaskCard(
                     fontWeight = FontWeight.Medium
                 )
             }
-
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
@@ -831,7 +893,7 @@ fun PendingTaskCard(
 }
 
 @Composable
-private fun ErrorMessage(errorMessage: String) {
+fun ErrorMessage(errorMessage: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -858,7 +920,7 @@ private fun ErrorMessage(errorMessage: String) {
 }
 
 @Composable
-private fun EmptyBookingsMessage() {
+fun EmptyBookingsMessage() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -888,7 +950,7 @@ private fun EmptyBookingsMessage() {
 }
 
 @Composable
-private fun EmptyTasksMessage() {
+fun EmptyTasksMessage() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
