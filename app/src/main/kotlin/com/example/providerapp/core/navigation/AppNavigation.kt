@@ -12,6 +12,7 @@ import com.example.providerapp.core.supabase
 import com.example.providerapp.presentation.auth.LoginScreen
 import com.example.providerapp.presentation.search.MapboxSuggestionScreen
 import com.example.providerapp.presentation.auth.RegisterScreen
+import com.example.providerapp.presentation.notification.NotificationScreen
 import com.example.providerapp.screen.home.HomeScreenWrapper
 import com.example.providerapp.presentation.search.SearchUsersScreen
 import io.github.jan.supabase.auth.auth
@@ -22,7 +23,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation( initialRoute: String? = null) {
     val navController = rememberNavController()
 //    var authError by remember { mutableStateOf<String?>(null) }
 
@@ -30,8 +31,18 @@ fun AppNavigation() {
         CoroutineScope(Dispatchers.Main).launch {
             val session = supabase.auth.currentSessionOrNull()
             if (session != null) {
-                navController.navigate("search") {
-                    popUpTo("login") { inclusive = true }
+                // Nếu có initialRoute từ notification, navigate đến đó
+                if (initialRoute == "notifications") {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                    // Delay một chút rồi navigate đến notifications
+                    kotlinx.coroutines.delay(500)
+                    navController.navigate("notifications")
+                } else {
+                    navController.navigate("search") {
+                        popUpTo("login") { inclusive = true }
+                    }
                 }
             }
         }
@@ -97,6 +108,12 @@ fun AppNavigation() {
                     // For now, navigate to a new chat
                     navController.navigate("chat/new_${user.id}/${user.id}/${user.name}")
                 }
+            )
+        }
+
+        composable("notifications") {
+            NotificationScreen(
+                navController = navController
             )
         }
     }

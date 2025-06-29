@@ -1,5 +1,6 @@
 package com.example.providerapp.model.viewmodel
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,6 +19,9 @@ class UserViewModel : ViewModel() {
 
     var isEditing by mutableStateOf(false)
         private set
+
+    // AuthViewModel để xử lý đăng xuất
+    private val authViewModel = AuthViewModel()
 
     fun loadUserById(userId: String) {
         isLoading = true
@@ -105,8 +109,38 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun logout(onLogout: () -> Unit) {
-        // Xử lý đăng xuất (xóa token, dữ liệu,...)
-        onLogout()
+    /**
+     * Đăng xuất người dùng
+     * Sử dụng AuthViewModel để xử lý việc đăng xuất hoàn chỉnh
+     * @param context Context để truy cập SharedPreferences
+     * @param onLogout Callback được gọi sau khi đăng xuất thành công
+     */
+    fun logout(context: Context, onLogout: () -> Unit) {
+        authViewModel.logout(context) {
+            // Reset user data trong UserViewModel
+            user = null
+            isEditing = false
+            errorMessage = null
+            
+            // Gọi callback để navigate về login screen
+            onLogout()
+        }
+    }
+
+    /**
+     * Đăng xuất nhanh không cần async processing
+     * @param context Context để truy cập SharedPreferences  
+     * @param onLogout Callback được gọi sau khi đăng xuất thành công
+     */
+    fun quickLogout(context: Context, onLogout: () -> Unit) {
+        authViewModel.quickLogout(context) {
+            // Reset user data trong UserViewModel
+            user = null
+            isEditing = false
+            errorMessage = null
+            
+            // Gọi callback để navigate về login screen
+            onLogout()
+        }
     }
 }

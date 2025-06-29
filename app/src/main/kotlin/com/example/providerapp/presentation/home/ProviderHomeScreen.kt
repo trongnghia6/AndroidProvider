@@ -8,8 +8,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,9 +22,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.providerapp.BuildConfig
 import com.example.providerapp.data.model.Bookings
 import com.example.providerapp.model.viewmodel.ProviderHomeViewModel
+import com.example.providerapp.presentation.viewmodel.NotificationViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -35,6 +39,8 @@ import kotlinx.datetime.Instant as KxInstant
 @Composable
 fun ProviderHomeScreen(
     viewModel: ProviderHomeViewModel = viewModel(),
+    notificationViewModel: NotificationViewModel = viewModel(),
+    navController: NavController? = null,
     reminder: String? = null
 ) {
     val bookings = viewModel.bookings
@@ -50,6 +56,7 @@ fun ProviderHomeScreen(
     LaunchedEffect(providerId) {
         viewModel.loadBookings(providerId)
         viewModel.loadPendingTasks(providerId)
+        notificationViewModel.loadNotifications(providerId)
 
         reminder?.let {
             viewModel.checkLocationDistance(
@@ -73,6 +80,16 @@ fun ProviderHomeScreen(
         // Header Section
         item {
             HeaderSection(userName = userName ?: "User")
+        }
+
+        // Notification Section
+        item {
+            NotificationSection(
+                unreadCount = notificationViewModel.unreadCount,
+                onNotificationClick = {
+                    navController?.navigate("notifications")
+                }
+            )
         }
 
         // Reminder Card (if needed)
@@ -130,6 +147,71 @@ fun ProviderHomeScreen(
             },
             isPendingTask = viewModel.pendingTasks.contains(task)
         )
+    }
+}
+
+@Composable
+private fun NotificationSection(
+    unreadCount: Int,
+    onNotificationClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onNotificationClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Thông báo",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Thông báo",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (unreadCount > 0) {
+                    Badge(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ) {
+                        Text(
+                            text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                            color = MaterialTheme.colorScheme.onError,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Xem thông báo",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
     }
 }
 

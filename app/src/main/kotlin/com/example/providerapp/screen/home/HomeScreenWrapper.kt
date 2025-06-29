@@ -39,6 +39,7 @@ import androidx.navigation.navArgument
 import com.example.providerapp.presentation.userprofile.AvatarChangeScreen
 import com.example.providerapp.presentation.services.ServiceDetailsScreen
 import com.example.providerapp.data.model.ServiceWithDetails
+import com.example.providerapp.presentation.notification.NotificationScreen
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -93,11 +94,10 @@ fun HomeScreenWrapper(
                 if (isLoading) {
                     Text("Đang tải...")
                 } else {
-//                    HomeScreen(
-//                        onLogout = onLogout,
-//                        viewModel = homeViewModel
-//                    )
-                    ProviderHomeScreen()
+
+                    ProviderHomeScreen(
+                        navController = internalNavController
+                    )
                 }
             }
 
@@ -111,6 +111,7 @@ fun HomeScreenWrapper(
 
             composable("profile_main") {
                 UserProfileView(
+                    onLogout = onLogout, // Truyền onLogout callback
                     onAvatarClick = {
                         internalNavController.navigate("avatar_change")
                     }
@@ -193,6 +194,11 @@ fun HomeScreenWrapper(
             composable("avatar_change") {
                 AvatarChangeScreen(
                     onBackClick = { internalNavController.popBackStack() }
+                )
+            }
+            composable("notifications") {
+                NotificationScreen(
+                    navController = internalNavController
                 )
             }
 

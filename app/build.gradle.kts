@@ -131,4 +131,12 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.material.icons.extended)
 
+    //firebase
+    // BOM quản lý version
+    implementation(platform(libs.firebase.bom))
+
+    // Firebase Messaging
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+
 }
