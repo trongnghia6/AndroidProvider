@@ -23,7 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.util.Log
 import com.example.providerapp.BuildConfig
+import com.example.providerapp.core.MyFirebaseMessagingService
 import com.example.providerapp.data.model.Bookings
 import com.example.providerapp.model.viewmodel.ProviderHomeViewModel
 import com.example.providerapp.presentation.viewmodel.NotificationViewModel
@@ -53,10 +58,19 @@ fun ProviderHomeScreen(
     val providerId = sharedPref.getString("user_id", "User") ?: "User"
     var showReminder by remember { mutableStateOf(false) }
 
-    LaunchedEffect(providerId) {
+    // State để track notification count để detect thông báo mới
+    var lastNotificationCount by remember { mutableStateOf(notificationViewModel.unreadCount) }
+
+    // Function để refresh tất cả data
+    val refreshData = {
         viewModel.loadBookings(providerId)
         viewModel.loadPendingTasks(providerId)
         notificationViewModel.loadNotifications(providerId)
+    }
+
+    // Load initial data
+    LaunchedEffect(providerId) {
+        refreshData()
 
         reminder?.let {
             viewModel.checkLocationDistance(
@@ -67,6 +81,37 @@ fun ProviderHomeScreen(
                     showReminder = isTooFar
                 }
             )
+        }
+    }
+
+    // Watch notification count changes để refresh ngay khi có thông báo mới
+    LaunchedEffect(notificationViewModel.unreadCount) {
+        if (notificationViewModel.unreadCount > lastNotificationCount) {
+            // Có thông báo mới, refresh data ngay lập tức
+            refreshData()
+        }
+        lastNotificationCount = notificationViewModel.unreadCount
+    }
+
+    // Listen for FCM broadcast để refresh data khi có notification mới
+    DisposableEffect(context) {
+        val broadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                if (intent?.action == MyFirebaseMessagingService.NEW_NOTIFICATION_ACTION) {
+                    val notificationType = intent.getStringExtra(MyFirebaseMessagingService.EXTRA_NOTIFICATION_TYPE)
+                    Log.d("ProviderHome", "Received notification broadcast, type: $notificationType")
+                    
+                    // Refresh data ngay lập tức
+                    refreshData()
+                }
+            }
+        }
+
+        val intentFilter = IntentFilter(MyFirebaseMessagingService.NEW_NOTIFICATION_ACTION)
+        LocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver, intentFilter)
+
+        onDispose {
+            LocalBroadcastManager.getInstance(context).unregisterReceiver(broadcastReceiver)
         }
     }
 

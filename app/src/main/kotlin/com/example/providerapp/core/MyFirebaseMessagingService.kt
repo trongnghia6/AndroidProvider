@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -154,6 +155,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     .insert(notification)
 
                 Log.d("FCM", "Notification saved to database: $title")
+                
+                // Gửi broadcast để thông báo cho UI
+                val broadcastIntent = Intent(NEW_NOTIFICATION_ACTION).apply {
+                    putExtra(EXTRA_NOTIFICATION_TYPE, type)
+                }
+                LocalBroadcastManager.getInstance(this@MyFirebaseMessagingService)
+                    .sendBroadcast(broadcastIntent)
+                
+                Log.d("FCM", "Broadcast sent for new notification")
             } catch (e: Exception) {
                 Log.e("FCM", "Error saving notification to database: ${e.message}")
             }
@@ -161,6 +171,10 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     companion object {
+        // Broadcast constants
+        const val NEW_NOTIFICATION_ACTION = "com.example.providerapp.NEW_NOTIFICATION"
+        const val EXTRA_NOTIFICATION_TYPE = "notification_type"
+        
         /**
          * Generate and upload FCM token for current user
          */
