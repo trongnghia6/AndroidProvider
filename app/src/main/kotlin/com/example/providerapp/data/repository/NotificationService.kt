@@ -351,6 +351,7 @@ class NotificationService {
         return tokens
     }
 }
+
 @kotlinx.serialization.Serializable
 data class FcmPayload(
     val token: String,
@@ -358,3 +359,4 @@ data class FcmPayload(
     val body: String,
     val data: Map<String, String>
 )
+

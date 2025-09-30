@@ -1,5 +1,6 @@
 package com.example.providerapp.core
 
+//noinspection SuspiciousImport
 import android.R
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -41,7 +42,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (userId.isNullOrEmpty()) {
             Log.w("FCM", "No user ID found, will save token when user logs in")
             // Save token locally for later use
-            sharedPreferences.edit() { putString("pending_fcm_token", token) }
+            sharedPreferences.edit { putString("pending_fcm_token", token) }
             return
         }
 
@@ -52,7 +53,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             } catch (e: Exception) {
                 Log.e("FCM", "Failed to send token to Supabase: ${e.message}")
                 // Save token locally for retry
-                sharedPreferences.edit() { putString("pending_fcm_token", token) }
+                sharedPreferences.edit { putString("pending_fcm_token", token) }
             }
         }
     }
@@ -199,7 +200,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
                         // Clear pending token
                         context.getSharedPreferences("user_session", MODE_PRIVATE)
-                            .edit() { remove("pending_fcm_token") }
+                            .edit { remove("pending_fcm_token") }
                     } catch (e: Exception) {
                         Log.e("FCM", "Failed to upload token: ${e.message}")
                     }
@@ -223,7 +224,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         Log.d("FCM", "Pending token uploaded successfully")
 
                         // Clear pending token
-                        sharedPreferences.edit() { remove("pending_fcm_token") }
+                        sharedPreferences.edit { remove("pending_fcm_token") }
                     } catch (e: Exception) {
                         Log.e("FCM", "Failed to upload pending token: ${e.message}")
                     }

@@ -3,20 +3,6 @@ package com.example.providerapp.data.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-//@Serializable
-//data class Services(
-//    val id: Int,
-//    val name: String,
-//    val price: Double,
-//    val description: String?,
-//    val numWorkers: Int,
-//    val serviceTypeId: Int,
-//    val specificServiceId: Int,
-//    val providerId: String,
-//    val createdAt: String? = null,
-//    val updatedAt: String? = null
-//)
-//
 @Serializable
 data class ServiceProviderInsert(
     val name: String,
@@ -45,37 +31,6 @@ data class ServiceUpdate(
     @SerialName("number_staff")
     val numWorkers: Int
 )
-//
-//@Serializable
-//data class ServiceTypes(
-//    val id: Int,
-//    val name: String,
-//    val description: String?
-//)
-//
-//@Serializable
-//data class SpecificService(
-//    val id: Int,
-//    val name: String,
-//    val serviceTypeId: Int,
-//    val description: String?
-//)
-//
-//@Serializable
-//data class ServiceWithDetails(
-//    val id: Int,
-//    val name: String,
-//    val price: Double,
-//    val description: String?,
-//    val numWorkers: Int,
-//    val serviceTypeId: Int,
-//    val specificServiceId: Int,
-//    val providerId: String,
-//    val serviceTypeName: String,
-//    val specificServiceName: String,
-//    val createdAt: String? = null,
-//    val updatedAt: String? = null
-//)
 
 @Serializable
 data class ServiceTypes(
