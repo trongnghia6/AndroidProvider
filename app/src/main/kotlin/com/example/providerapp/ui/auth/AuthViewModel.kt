@@ -13,6 +13,7 @@ import com.example.providerapp.data.repository.NotificationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.content.edit
 
 class AuthViewModel : ViewModel() {
 
@@ -36,7 +37,7 @@ class AuthViewModel : ViewModel() {
                     val sharedPref = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
                     val userId = user.id
                     val userName = user.name
-                    with(sharedPref.edit()) {
+                    sharedPref.edit {
                         putString("user_id", userId)
                         putString("username", userName)
                         apply()
@@ -142,9 +143,8 @@ class AuthViewModel : ViewModel() {
 
                 // 3. Xóa tất cả SharedPreferences
                 try {
-                    with(sharedPref.edit()) {
+                    sharedPref.edit {
                         clear() // Xóa tất cả dữ liệu
-                        apply()
                     }
                     Log.d("AuthViewModel", "Successfully cleared all SharedPreferences")
                 } catch (e: Exception) {
@@ -173,39 +173,6 @@ class AuthViewModel : ViewModel() {
                     onSuccess()
                 }
             }
-        }
-    }
-
-    /**
-     * Đăng xuất nhanh - chỉ xóa SharedPreferences và navigate
-     * Sử dụng khi cần logout ngay lập tức mà không cần xử lý async
-     */
-    fun quickLogout(context: Context, onSuccess: () -> Unit) {
-        try {
-            val sharedPref = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
-            val currentUserName = sharedPref.getString("username", "")
-
-            Log.d("AuthViewModel", "Quick logout for user: $currentUserName")
-
-            // Xóa tất cả SharedPreferences
-            with(sharedPref.edit()) {
-                clear()
-                apply()
-            }
-
-            // Reset state variables
-            authError = null
-            isSignUpSuccess = null
-            isLoading = false
-
-            Log.d("AuthViewModel", "Quick logout completed")
-            onSuccess()
-
-        } catch (e: Exception) {
-            Log.e("AuthViewModel", "Quick logout error: ${e.message}", e)
-            authError = "Đăng xuất thất bại: ${e.message}"
-            // Vẫn gọi onSuccess() để đảm bảo user có thể logout
-            onSuccess()
         }
     }
 }
