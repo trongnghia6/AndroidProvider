@@ -14,5 +14,7 @@ data class Users(
     @SerialName("phone_number")
     val phoneNumber: String = "",
     val avatar: String ?= null,
+    @SerialName("paypal_email")
+    val paypalEmail: String = "",
 
 )

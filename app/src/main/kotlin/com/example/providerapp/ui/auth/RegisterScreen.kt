@@ -47,6 +47,7 @@ fun RegisterScreen(
     var name by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
+    var paypalEmail by remember { mutableStateOf("") }
     var suggestions by remember { mutableStateOf<List<MapboxPlace>>(emptyList()) }
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -56,6 +57,7 @@ fun RegisterScreen(
 
     val isValid = phoneNumber.matches(Regex("^0[0-9]{9}$"))
     val isValidEmail = email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
+    val isValidPaypalEmail = paypalEmail.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
     val isLoading = viewModel.isLoading
     val authError = viewModel.authError
 
@@ -121,7 +123,10 @@ fun RegisterScreen(
                     password = password,
                     onPasswordChange = { password = it },
                     passwordVisible = passwordVisible,
-                    onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
+                    onPasswordVisibilityChange = { passwordVisible = !passwordVisible },
+                    paypalEmail = paypalEmail,
+                    onPaypalEmailChange = { paypalEmail = it },
+                    isValidPaypalEmail = isValidPaypalEmail
                 )
             }
 
@@ -195,7 +200,7 @@ fun RegisterScreen(
             item {
                 ActionButtonsSection(
                     isLoading = isLoading,
-                    isFormValid = name.isNotEmpty() && isValidEmail && password.isNotEmpty() && isValid && address.isNotEmpty(),
+                    isFormValid = name.isNotEmpty() && isValidEmail && password.isNotEmpty() && isValid && address.isNotEmpty() && isValidPaypalEmail,
                     onRegister = {
                         if (email.isNotEmpty() && password.isNotEmpty()) {
                             viewModel.clearError()
@@ -206,6 +211,7 @@ fun RegisterScreen(
                                     address = address,
                                     name = name,
                                     phoneNumber = phoneNumber,
+                                    paypalEmail = paypalEmail,
                                     onSuccess = {
                                         onRegisterSuccess()
                                     }
@@ -282,7 +288,10 @@ private fun PersonalInfoSection(
     password: String,
     onPasswordChange: (String) -> Unit,
     passwordVisible: Boolean,
-    onPasswordVisibilityChange: () -> Unit
+    onPasswordVisibilityChange: () -> Unit,
+    paypalEmail: String,
+    onPaypalEmailChange: (String) -> Unit,
+    isValidPaypalEmail: Boolean
 ) {
     FormCard(
         title = "Thông tin cá nhân",
@@ -309,6 +318,17 @@ private fun PersonalInfoSection(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 isError = email.isNotEmpty() && !isValidEmail,
                 supportingText = if (email.isNotEmpty() && !isValidEmail) "Email không hợp lệ" else null
+            )
+
+            CustomTextField(
+                value = paypalEmail,
+                onValueChange = onPaypalEmailChange,
+                label = "Paypal Email",
+                icon = Icons.Default.Email,
+                placeholder = "example@email.com",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                isError = paypalEmail.isNotEmpty() && !isValidPaypalEmail,
+                supportingText = if (paypalEmail.isNotEmpty() && !isValidPaypalEmail) "Paypal Email không hợp lệ" else null
             )
 
             CustomTextField(

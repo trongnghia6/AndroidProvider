@@ -29,7 +29,7 @@ class AuthRepository {
     suspend fun signInProvider(email: String, password: String): AuthDtos.UserSignIn? {
         return try {
             val users = supabase.from("users")
-                .select(columns = Columns.list("email", "password", "id", "name")) {
+                .select(columns = Columns.list("email", "password", "id", "name", "lock")) {
                     filter {
                         eq("email", email)
                         eq("password", password)

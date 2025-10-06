@@ -12,13 +12,16 @@ class AuthDtos {
         @SerialName("phone_number")
         val phoneNumber: String,
         val role: String,
-        val address: String
+        val address: String,
+        @SerialName("paypal_email")
+        val paypalEmail: String
     )
     @Serializable
     data class UserSignIn(
         val id : String,
         val email: String,
         val name: String,
-        val password: String
+        val password: String,
+        val lock: String
     )
 }

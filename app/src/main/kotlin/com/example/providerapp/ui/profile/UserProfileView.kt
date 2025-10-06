@@ -24,6 +24,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.PageInfo
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -137,6 +138,8 @@ fun UserProfileScreen(
     var name by remember { mutableStateOf(user.name) }
     var address by remember { mutableStateOf(user.address) }
     var phoneNumber by remember { mutableStateOf(user.phoneNumber) }
+    var paypalEmail by remember { mutableStateOf(user.paypalEmail) }
+    val isValidPaypalEmail = paypalEmail.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
     var suggestions by remember { mutableStateOf<List<MapboxPlace>>(emptyList()) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -238,6 +241,9 @@ fun UserProfileScreen(
                     },
                     phoneNumber = phoneNumber,
                     onPhoneNumberChange = { phoneNumber = it },
+                    paypalEmail = paypalEmail,
+                    onPaypalEmailChange = { paypalEmail = it },
+                    isValidPaypalEmail = isValidPaypalEmail,
                     suggestions = suggestions,
                     onSuggestionClick = { place ->
                         address = place.placeName
@@ -268,7 +274,8 @@ fun UserProfileScreen(
                                 id = userId.toString(),
                                 name = name,
                                 address = address,
-                                phoneNumber = phoneNumber
+                                phoneNumber = phoneNumber,
+                                paypalEmail = paypalEmail
                             ),
                             onError = { errorMsg ->
                                 updateError = errorMsg
@@ -280,6 +287,7 @@ fun UserProfileScreen(
                         name = user.name
                         address = user.address
                         phoneNumber = user.phoneNumber
+                        paypalEmail = user.paypalEmail
                     },
                     updateError = updateError
                 )
@@ -519,6 +527,9 @@ private fun ProfileInfoCard(
     onAddressChange: (String) -> Unit,
     phoneNumber: String?,
     onPhoneNumberChange: (String) -> Unit,
+    paypalEmail: String,
+    onPaypalEmailChange: (String) -> Unit,
+    isValidPaypalEmail: Boolean,
     suggestions: List<MapboxPlace>,
     onSuggestionClick: (MapboxPlace) -> Unit,
     onLocationClick: () -> Unit,
@@ -635,6 +646,18 @@ private fun ProfileInfoCard(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                 )
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ModernTextField(
+                    value = paypalEmail,
+                    onValueChange = onPaypalEmailChange,
+                    label = "Email PayPal",
+                    leadingIcon = Icons.Default.AccountBalanceWallet,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    isError = paypalEmail.isNotEmpty() && !isValidPaypalEmail,
+                    supportingText = if (paypalEmail.isNotEmpty() && !isValidPaypalEmail) "Paypal Email không hợp lệ" else null
+                )
+
                 updateError?.let {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -695,6 +718,12 @@ private fun ProfileInfoCard(
                     icon = Icons.Default.Phone,
                     label = "Số điện thoại",
                     value = user.phoneNumber
+                )
+
+                InfoItem(
+                    icon = Icons.Default.AccountBalanceWallet,
+                    label = "Email PayPal",
+                    value = user.paypalEmail
                 )
             }
         }
@@ -780,30 +809,43 @@ private fun ModernTextField(
     label: String,
     leadingIcon: ImageVector,
     trailingIcon: @Composable (() -> Unit)? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    isError: Boolean = false,
+    supportingText: String? = null
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+    Column {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            leadingIcon = {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingIcon = trailingIcon,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = keyboardOptions,
+            isError = isError,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                cursorColor = MaterialTheme.colorScheme.primary
             )
-        },
-        trailingIcon = trailingIcon,
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        keyboardOptions = keyboardOptions,
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-            cursorColor = MaterialTheme.colorScheme.primary
         )
-    )
+        supportingText?.let { text ->
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
 }
 
 @Composable
