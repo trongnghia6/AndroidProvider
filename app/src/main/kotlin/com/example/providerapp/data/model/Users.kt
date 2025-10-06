@@ -18,3 +18,9 @@ data class Users(
     val paypalEmail: String = "",
 
 )
+
+@Serializable
+data class WalletData(
+    @SerialName("wallet_balance")
+    val walletBalance: Double
+)

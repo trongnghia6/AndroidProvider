@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,16 +14,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.providerapp.core.supabase
 import com.example.providerapp.data.model.Bookings
+import com.example.providerapp.data.model.auth.AuthDtos
 import com.example.providerapp.data.model.fetchBookingsByProvider
 import com.example.providerapp.data.repository.DistanceRepository.Companion.geocodeAddress
 import com.google.android.gms.location.LocationServices
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.launch
 
 
 class ProviderHomeViewModel : ViewModel() {
 
     var bookings by mutableStateOf<List<Bookings>>(emptyList())
+        private set
+
+    var userSession by mutableStateOf<AuthDtos.UserSession?>(null)
         private set
 
     var errorMessage by mutableStateOf<String?>(null)
@@ -126,6 +132,27 @@ class ProviderHomeViewModel : ViewModel() {
             } catch (e: Exception) {
                 errorMessage = e.message
                 Log.e("CompleteBooking", "Error updating booking status", e)
+            }
+        }
+    }
+    fun loadMyInformation(providerId: String, onResult: (String?, String?, Double?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                errorMessage = null
+                val response = supabase.postgrest
+                    .from("users")
+                    .select(columns = Columns.list("id", "name", "wallet_balance")) {
+                        filter {
+                            eq("id", providerId)
+                        }
+                    }
+                    .decodeSingle< AuthDtos.UserSession>()
+                userSession = response
+                onResult(response.id, response.name, response.walletBalance)
+            } catch (e: Exception) {
+                errorMessage = e.message
+                Log.e("ProviderHomeVM", "Error loading user information", e)
+                onResult(null, null, null)
             }
         }
     }

@@ -15,6 +15,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.providerapp.core.navigation.AppNavigation
+import com.example.providerapp.core.paypal.PayPalDeepLinkHandler
+
 
 class MainActivity : ComponentActivity() {
     
@@ -32,6 +34,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Handle PayPal deep link
+        PayPalDeepLinkHandler.handleDeepLink(intent.data)
         // Request notification permission for Android 13+
         askNotificationPermission()
 
@@ -40,6 +44,8 @@ class MainActivity : ComponentActivity() {
         if (navigateTo != null) {
             Log.d("MainActivity", "Notification clicked, navigate to: $navigateTo")
         }
+        
+
 
         setContent {
             MaterialTheme {
@@ -55,6 +61,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent) // Important: Update the activity's intent
+        PayPalDeepLinkHandler.handleDeepLink(intent.data)
 
         // Handle notification click when app is already running
         val navigateTo = intent.getStringExtra("navigate_to")
@@ -63,6 +70,7 @@ class MainActivity : ComponentActivity() {
             // TODO: Trigger navigation to specific screen
             // Có thể implement thêm logic để navigate đến screen tương ứng
         }
+
     }
     
     private fun askNotificationPermission() {
@@ -83,6 +91,15 @@ class MainActivity : ComponentActivity() {
             } else {
                 // Directly ask for the permission
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+    
+    private fun handlePayPalDeepLink(intent: Intent?) {
+        intent?.data?.let { uri ->
+            if (uri.scheme == "myapp" && uri.host == "paypal-return") {
+                Log.d("MainActivity", "Handling PayPal deep link: $uri")
+                PayPalDeepLinkHandler.handleDeepLink(uri)
             }
         }
     }

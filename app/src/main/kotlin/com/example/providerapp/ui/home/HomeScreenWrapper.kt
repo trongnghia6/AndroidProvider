@@ -38,6 +38,7 @@ import com.example.providerapp.data.model.ServiceWithDetails
 import com.example.providerapp.ui.notifications.NotificationScreen
 import com.example.providerapp.ui.suggestion.MapboxSuggestionScreen
 import com.example.providerapp.ui.suggestion.SearchUsersScreen
+import com.example.providerapp.ui.wallet.WalletScreen
 import com.example.providerapp.ui.tasks.TaskViewModel
 import kotlinx.serialization.json.Json
 
@@ -196,6 +197,12 @@ fun HomeScreenWrapper(
             }
             composable("notifications") {
                 NotificationScreen(
+                    navController = internalNavController
+                )
+            }
+
+            composable("wallet") {
+                WalletScreen(
                     navController = internalNavController
                 )
             }

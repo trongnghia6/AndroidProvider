@@ -1,5 +1,6 @@
 package com.example.providerapp.ui.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -126,6 +127,17 @@ fun ProviderHomeScreen(
         // Header Section
         item {
             HeaderSection(userName = userName ?: "User")
+        }
+
+        // Wallet Balance Section
+        item {
+            WalletBalanceSection(
+                viewModel = viewModel,
+                providerId = providerId,
+                onWalletClick = {
+                    navController?.navigate("wallet")
+                }
+            )
         }
 
         // Notification Section
@@ -1104,5 +1116,134 @@ fun EmptyTasksMessage() {
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@SuppressLint("DefaultLocale")
+@Composable
+private fun WalletBalanceSection(
+    viewModel: ProviderHomeViewModel,
+    providerId: String,
+    onWalletClick: () -> Unit
+) {
+    var walletBalance by remember { mutableStateOf<Double?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    
+    // Load wallet balance when component mounts
+    LaunchedEffect(providerId) {
+        viewModel.loadMyInformation(providerId) { id, name, balance ->
+            isLoading = false
+            walletBalance = balance
+        }
+    }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onWalletClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountBalanceWallet,
+                        contentDescription = "Ví",
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Số dư ví",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+                
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Xem ví",
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            when {
+                isLoading -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Đang tải...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+                walletBalance != null -> {
+                    Text(
+                        text = "${String.format("%,.0f", walletBalance!!)} VNĐ",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (walletBalance!! < 0) 
+                            MaterialTheme.colorScheme.error 
+                        else 
+                            MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                    
+                    // Show warning message if balance is negative
+                    if (walletBalance!! < 0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        val warningMessage = if (walletBalance!! < -500000) {
+                            "⚠️ Số dư ví đang âm. Tài khoản của bạn sẽ bị khóa nếu số dư dưới -500,000 VNĐ"
+                        } else {
+                            "⚠️ Số dư ví đang âm. Tài khoản của bạn sẽ bị khóa nếu số dư dưới -500,000 VNĐ"
+                        }
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Text(
+                                text = warningMessage,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(12.dp),
+                                lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.2
+                            )
+                        }
+                    }
+                }
+                else -> {
+                    Text(
+                        text = "Không thể tải số dư",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
     }
 }

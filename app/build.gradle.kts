@@ -139,4 +139,15 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
 
+    //paypal
+    implementation(libs.okhttp.logging)
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.android)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.core.ktx)
+    implementation("androidx.browser:browser:1.7.0")  // Chrome Custom Tabs
+
+
 }

@@ -24,4 +24,11 @@ class AuthDtos {
         val password: String,
         val lock: String
     )
+    @Serializable
+    data class UserSession(
+        val id: String,
+        val name: String,
+        @SerialName("wallet_balance")
+        val walletBalance: Double
+    )
 }
