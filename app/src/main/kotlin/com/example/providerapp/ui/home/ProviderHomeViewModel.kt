@@ -14,13 +14,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.providerapp.core.supabase
 import com.example.providerapp.data.model.Bookings
+import com.example.providerapp.data.model.Transaction
+import com.example.providerapp.data.model.Transactions
 import com.example.providerapp.data.model.auth.AuthDtos
 import com.example.providerapp.data.model.fetchBookingsByProvider
 import com.example.providerapp.data.repository.DistanceRepository.Companion.geocodeAddress
+import com.example.providerapp.ui.wallet.WalletTransaction
 import com.google.android.gms.location.LocationServices
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class ProviderHomeViewModel : ViewModel() {
@@ -126,12 +135,55 @@ class ProviderHomeViewModel : ViewModel() {
                     }
                 }
 
+                val transactions = supabase.postgrest.from("transactions").select(columns = Columns.list("amount", "payment_method", "booking_id")) {
+                    filter {
+                        eq("booking_id", bookingId)
+                    }
+                }.decodeSingleOrNull<Transactions>()
+
+                val amount = (transactions?.amount?.times(0.2)) ?: 0.0
+
+                if (transactions?.paymentMethod == "Tiền mặt") {
+                    supabase.postgrest.from("transactions").update(
+                        {
+                            set("status", "completed")
+                        }
+                    ) {
+                        filter {
+                            eq("booking_id", bookingId)
+                        }
+                    }
+                    val params = buildJsonObject {
+                        put("uid", providerId)
+                        put("amount", amount)
+                    }
+                    try {
+                        supabase.postgrest.rpc(
+                            "decrement_wallet",
+                            params
+                        )
+                        val transaction = WalletTransaction(
+                            id = System.currentTimeMillis().toString(),
+                            userId = providerId,
+                            type = "payout",
+                            amount = amount,
+                            date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                            status = "completed",
+                        )
+                        supabase.postgrest.from("wallet_transaction").insert(transaction)
+                        Log.d("CompleteBooking", "Wallet decremented successfully")
+                    }catch (e: Exception) {
+                        Log.e("CompleteBooking", "Error decrementing wallet: ${e.message}")
+                    }
+
+                    Log.d("CompleteBooking", "Booking $bookingId marked as completed.")
+                }
                 // Refresh bookings
                 loadBookings(providerId)
                 Log.d("CompleteBooking", "Updated booking $bookingId from $currentStatus to $newStatus")
             } catch (e: Exception) {
                 errorMessage = e.message
-                Log.e("CompleteBooking", "Error updating booking status", e)
+                Log.e("CompleteBooking", "Error updating booking status: ${e.message}")
             }
         }
     }

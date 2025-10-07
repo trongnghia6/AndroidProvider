@@ -147,7 +147,7 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp)
     implementation(libs.androidx.core.ktx)
-    implementation("androidx.browser:browser:1.7.0")  // Chrome Custom Tabs
+    implementation(libs.androidx.browser) // Chrome Custom Tabs
 
 
 }

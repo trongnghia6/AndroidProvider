@@ -166,7 +166,7 @@ fun ProviderHomeScreen(
                     .atZoneSameInstant(systemZone)
                     .toLocalDate()
 
-                localDate.isEqual(today)
+                !localDate.isAfter(today)
             }
 
             TodayBookingsSection(
