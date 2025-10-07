@@ -67,6 +67,9 @@ fun ProviderHomeScreen(
     val refreshData = {
         viewModel.loadBookings(providerId)
         viewModel.loadPendingTasks(providerId)
+        viewModel.loadMyInformation(providerId) { _, _, _ -> 
+            // Callback được gọi khi thông tin được load xong
+        }
         notificationViewModel.loadNotifications(providerId)
     }
 
@@ -1129,12 +1132,10 @@ private fun WalletBalanceSection(
     var walletBalance by remember { mutableStateOf<Double?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     
-    // Load wallet balance when component mounts
-    LaunchedEffect(providerId) {
-        viewModel.loadMyInformation(providerId) { id, name, balance ->
-            isLoading = false
-            walletBalance = balance
-        }
+    // Load wallet balance when component mounts or when userSession changes
+    LaunchedEffect(providerId, viewModel.userSession) {
+        isLoading = false
+        walletBalance = viewModel.userSession?.walletBalance
     }
     
     Card(
